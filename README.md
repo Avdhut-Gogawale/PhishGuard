@@ -76,4 +76,4 @@ PhishGuard significantly reduces the time required for initial phishing investig
 - [ ] **Dark Web Check**: Checking if sender domains or emails have been part of recent data breaches.
 
 ---
-*Developed by SOC Enthusiasts for a Safer Web.*
+*Developed by Avdhut Gogawale (CyberSecurity Enthusiastic).*
