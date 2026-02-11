@@ -5,3 +5,4 @@ tldextract
 validators
 python-levenshtein
 beautifulsoup4
+gunicorn
