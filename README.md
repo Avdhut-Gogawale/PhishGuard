@@ -1,7 +1,7 @@
 # PhishGuard - SOC Phishing Detection Tool
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/44a1daf2-926c-4cc6-992f-f8ce769b59e7" alt="PhishGuard Logo" width="400">
+  <img src="https://github.com/user-attachments/assets/d105ce54-b92f-4c88-9d57-ba7719b47f8a" alt="PhishGuard Logo">
 </p>
 
 PhishGuard is a sophisticated, Python-based security engine designed for Security Operations Center (SOC) analysts to quickly identify and analyze phishing threats. By combining local heuristic analysis with global threat intelligence from VirusTotal, PhishGuard provides a comprehensive risk assessment for both suspicious URLs and email files (.eml).
