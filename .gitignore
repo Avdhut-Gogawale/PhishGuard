@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Project specific
+uploads/*
+!uploads/.gitkeep
+.DS_Store
+*.eml
+sample_phishing.eml

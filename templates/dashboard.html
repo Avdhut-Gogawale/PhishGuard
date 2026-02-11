@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | SOC Phishing Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-area">
+                <h1>PhishGuard</h1>
+                <p>SOC Alert Monitoring & Threat Intel Analysis</p>
+            </div>
+            <div class="system-status">
+                <span class="severity Low">System Online</span>
+            </div>
+        </header>
+
+        <div class="scanner-section">
+            <!-- URL Analyzer Card -->
+            <div class="card scanner-card">
+                <h2>🌐 Analyze Suspicious URL</h2>
+                <form id="url-form" class="input-group">
+                    <input type="text" id="url-input" placeholder="https://suspicious-link.com" required>
+                    <button type="submit" class="btn">Scan URL</button>
+                </form>
+            </div>
+
+            <!-- Email Analyzer Card -->
+            <div class="card scanner-card">
+                <h2>📧 Analyze Email (.eml)</h2>
+                <div id="file-upload-form" onclick="document.getElementById('file-input').click()">
+                    <p>Click or Drag & Drop .eml file</p>
+                    <input type="file" id="file-input" class="hidden" accept=".eml">
+                    <p id="file-name" class="alert-time" style="margin-top: 5px;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alerts-section">
+            <h2>Recent Security Alerts</h2>
+            <div id="alerts-list">
+                {% if not alerts %}
+                <div class="card" style="text-align: center; color: var(--text-secondary);">
+                    No alerts detected yet. Start by scanning a URL or uploading an email.
+                </div>
+                {% endif %}
+                {% for alert in alerts %}
+                <div class="alert-item card" onclick="viewAlert('{{ alert.id }}')">
+                    <span class="alert-type">{{ alert.type }}</span>
+                    <span class="alert-target">{{ alert.target }}</span>
+                    <span class="severity {{ alert.severity }}">{{ alert.severity }}</span>
+                    <span class="alert-time">{{ alert.timestamp }}</span>
+                    <button class="btn btn-secondary btn-sm"
+                        onclick="event.stopPropagation(); viewAlert('{{ alert.id }}')">View</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Detail View -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+                <div>
+                    <h3 id="modal-title" style="font-size: 1.5rem;">Alert Detail</h3>
+                    <p id="modal-subtitle" class="alert-time"></p>
+                </div>
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+
+            <div id="modal-body">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlForm = document.getElementById('url-form');
+        const fileInput = document.getElementById('file-input');
+        const alertsList = document.getElementById('alerts-list');
+        const modal = document.getElementById('modal');
+
+        // URL Analysis
+        urlForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('url-input').value;
+            const submitBtn = e.target.querySelector('button');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Analyzing...';
+
+            try {
+                const formData = new FormData();
+                formData.append('url', url);
+                const resp = await fetch('/analyze-url', {
+                    method: 'POST',
+                    body: formData
+                });
+                const alert = await resp.json();
+                addAlertToList(alert);
+                viewAlert(alert.id);
+                urlForm.reset();
+            } catch (err) {
+                alert('Analysis failed');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Scan URL';
+            }
+        });
+
+        // Email Analysis
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-name').innerText = file.name;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const resp = await fetch('/upload-eml', {
+                    method: 'POST',
+                    body: formData
+                });
+                const alert = await resp.json();
+                addAlertToList(alert);
+                viewAlert(alert.id);
+            } catch (err) {
+                alert('Analysis failed');
+            }
+        });
+
+        function addAlertToList(alert) {
+            const html = `
+                <div class="alert-item card" onclick="viewAlert('${alert.id}')">
+                    <span class="alert-type">${alert.type}</span>
+                    <span class="alert-target">${alert.target}</span>
+                    <span class="severity ${alert.severity}">${alert.severity}</span>
+                    <span class="alert-time">${alert.timestamp}</span>
+                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewAlert('${alert.id}')">View</button>
+                </div>
+            `;
+            // Remove empty placeholder
+            if (alertsList.innerText.includes('No alerts')) alertsList.innerHTML = '';
+            alertsList.insertAdjacentHTML('afterbegin', html);
+        }
+
+        async function viewAlert(id) {
+            const resp = await fetch(`/alert/${id}`);
+            const alert = await resp.json();
+
+            document.getElementById('modal-title').innerText = alert.type + ' Analysis Result';
+            document.getElementById('modal-subtitle').innerText = alert.target + ' analyzed at ' + alert.timestamp;
+
+            let bodyHtml = `
+                <div class="detail-section">
+                    <h4>Risk Assessment</h4>
+                    <p style="font-size: 1.25rem;">Severity: <span class="severity ${alert.severity}">${alert.severity}</span></p>
+                    <p>Risk Score: <strong>${alert.score}/100</strong></p>
+                </div>
+            `;
+
+            if (alert.details.suspicious_indicators && alert.details.suspicious_indicators.length > 0) {
+                bodyHtml += `
+                    <div class="detail-section">
+                        <h4>Suspicious Indicators</h4>
+                        <ul class="indicator-list">
+                            ${alert.details.suspicious_indicators.map(ind => `<li class="indicator-item">${ind}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else if (alert.details.reasons && alert.details.reasons.length > 0) {
+                bodyHtml += `
+                    <div class="detail-section">
+                        <h4>Threat Indicators</h4>
+                        <ul class="indicator-list">
+                            ${alert.details.reasons.map(ind => `<li class="indicator-item">${ind}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (alert.details.vt_data && alert.details.vt_data.status === 'success') {
+                bodyHtml += `
+                    <div class="detail-section">
+                        <h4>VirusTotal Intel</h4>
+                        <p>Malicious: <span style="color:var(--accent-red)">${alert.details.vt_data.malicious}</span></p>
+                        <p>Suspicious: <span style="color:var(--accent-yellow)">${alert.details.vt_data.suspicious}</span></p>
+                        <p>Harmless: <span style="color:var(--accent-green)">${alert.details.vt_data.harmless}</span></p>
+                    </div>
+                `;
+            }
+
+            if (alert.type === 'Email') {
+                bodyHtml += `
+                    <div class="detail-section">
+                        <h4>Email Headers</h4>
+                        <p><strong>From:</strong> ${alert.details.from}</p>
+                        <p><strong>Subject:</strong> ${alert.details.subject}</p>
+                    </div>
+                `;
+
+                if (alert.details.urls && alert.details.urls.length > 0) {
+                    bodyHtml += `
+                        <div class="detail-section">
+                            <h4>Analyzed Links in Email</h4>
+                            ${alert.details.urls.map(u => `
+                                <div style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                    <strong>${u.url}</strong><br>
+                                    <small>${u.analysis.reasons.join(', ') || 'Clean'}</small>
+                                    ${u.vt_data && u.vt_data.status === 'success' ?
+                            `<br><small style="color:var(--accent-red)">VT: ${u.vt_data.malicious} detections</small>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                if (alert.details.attachments && alert.details.attachments.length > 0) {
+                    bodyHtml += `
+                        <div class="detail-section">
+                            <h4>Analyzed Attachments</h4>
+                            ${alert.details.attachments.map(a => `
+                                <div style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                    <strong>📎 ${a.filename}</strong> (${(a.size / 1024).toFixed(1)} KB)<br>
+                                    <small>Type: ${a.type}</small><br>
+                                    ${a.vt_data && a.vt_data.status === 'success' ?
+                            `<small style="color:${a.vt_data.malicious > 0 ? 'var(--accent-red)' : 'var(--accent-green)'}">
+                                            VirusTotal: ${a.vt_data.malicious} malicious detections
+                                        </small>` :
+                            `<small>${a.vt_data ? a.vt_data.message : 'VT check pending'}</small>`}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('modal-body').innerHTML = bodyHtml;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // Close on click outside
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+
+</html>
