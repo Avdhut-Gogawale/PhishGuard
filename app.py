@@ -6,6 +6,7 @@ from detector.email_analyzer import EmailAnalyzer
 from detector.vt_checker import VTChecker
 import uuid
 import datetime
+import tempfile
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -13,7 +14,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "phish_detect_secret"
-app.config['UPLOAD_FOLDER'] = 'uploads'
+# Use /tmp for serverless environments like Vercel
+app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 
 # Ensure upload folder exists
