@@ -6,7 +6,13 @@
 
 PhishGuard is a sophisticated, Python-based security engine designed for Security Operations Center (SOC) analysts to quickly identify and analyze phishing threats. By combining local heuristic analysis with global threat intelligence from VirusTotal, PhishGuard provides a comprehensive risk assessment for both suspicious URLs and email files (.eml).
 
-🚀 **Live Demo**: [https://phishguard-bykp.onrender.com](https://phishguard-bykp.onrender.com)
+🚀 **Live Demos:** 
+
+**Vercel**
+[https://phishguard-ag.vercel.app/](https://phishguard-ag.vercel.app/)
+
+**Render**
+[https://phishguard-bykp.onrender.com](https://phishguard-bykp.onrender.com)
 
 ---
 
