@@ -12,6 +12,19 @@
 </head>
 
 <body>
+    <!-- Change 2: Top Nav Bar with GitHub + LinkedIn -->
+    <nav class="top-nav">
+        <span class="top-nav-brand">PhishGuard</span>
+        <div class="top-nav-links">
+            <a href="https://github.com/Avdhut-Gogawale/PhishGuard" target="_blank" rel="noopener noreferrer" title="GitHub">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/in/avdhut-gogawale/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+        </div>
+    </nav>
+
     <div class="container">
         <header>
             <div class="logo-area">
@@ -23,29 +36,53 @@
             </div>
         </header>
 
+        <!-- Change 1: Live Stats Bar -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-tile total">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Scanned</div>
+            </div>
+            <div class="stat-tile phishing">
+                <div class="stat-value" id="stat-phishing">0</div>
+                <div class="stat-label">Phishing Detected</div>
+            </div>
+            <div class="stat-tile clean">
+                <div class="stat-value" id="stat-clean">0</div>
+                <div class="stat-label">Clean</div>
+            </div>
+            <div class="stat-tile rate">
+                <div class="stat-value" id="stat-rate">0%</div>
+                <div class="stat-label">Detection Rate</div>
+            </div>
+        </div>
+
         <div class="scanner-section">
-            <!-- URL Analyzer Card -->
-            <div class="card scanner-card">
+            <!-- URL Analyzer Card (Change 4: left border, Change 11: Try Demo) -->
+            <div class="card scanner-card url-card">
                 <h2>🌐 Analyze Suspicious URL</h2>
                 <form id="url-form" class="input-group">
                     <input type="text" id="url-input" placeholder="https://suspicious-link.com" required>
                     <button type="submit" class="btn">Scan URL</button>
                 </form>
+                <div class="demo-row">
+                    <span class="demo-label">No URL? Try a sample phishing link</span>
+                    <button type="button" class="btn-demo" id="btn-try-demo" onclick="tryDemo()">Try Demo →</button>
+                </div>
             </div>
 
-            <!-- Email Analyzer Card -->
-            <div class="card scanner-card">
+            <!-- Email Analyzer Card (Change 3: fixed drop zone, Change 4: left border) -->
+            <div class="card scanner-card email-card">
                 <h2>📧 Analyze Email (.eml)</h2>
                 <div id="file-upload-form" onclick="document.getElementById('file-input').click()">
-                    <p>Click or Drag &amp; Drop .eml file</p>
+                    <p class="dropzone-main">Click or Drag &amp; Drop .eml file</p>
+                    <p class="dropzone-sub">Supported format: .eml (max 16MB)</p>
                     <input type="file" id="file-input" class="hidden" accept=".eml">
-                    <p id="file-name" class="alert-time" style="margin-top: 5px;"></p>
                 </div>
+                <div id="file-tag-area"></div>
             </div>
         </div>
 
         <div class="alerts-section">
-            <!-- Change 3: alerts header with Clear History button -->
             <div class="alerts-header">
                 <h2>Recent Security Alerts</h2>
                 <button id="btn-clear-history" class="btn-clear" onclick="clearHistory()">Clear History</button>
@@ -55,7 +92,6 @@
             </div>
         </div>
 
-        <!-- Change 7: Footer attribution -->
         <footer class="site-footer">
             Threat intelligence powered by <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">VirusTotal</a>
         </footer>
@@ -88,7 +124,7 @@
         const MAX_ALERTS = 20;
 
         // ===================================================================
-        // Change 3 — localStorage helpers
+        // localStorage helpers
         // ===================================================================
         function loadAlerts() {
             try {
@@ -110,10 +146,67 @@
         function clearHistory() {
             localStorage.removeItem(STORAGE_KEY);
             renderAlertsList();
+            updateStats();
         }
 
         // ===================================================================
-        // Change 5 — VT badge HTML helper
+        // Change 1 — Stats calculation
+        // ===================================================================
+        function updateStats() {
+            const alerts = loadAlerts();
+            const total = alerts.length;
+            const phishing = alerts.filter(a => a.severity === 'High' || a.severity === 'Medium').length;
+            const clean = alerts.filter(a => a.severity === 'Low').length;
+            const rate = total > 0 ? Math.round((phishing / total) * 100) : 0;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-phishing').textContent = phishing;
+            document.getElementById('stat-clean').textContent = clean;
+            document.getElementById('stat-rate').textContent = rate + '%';
+        }
+
+        // ===================================================================
+        // Change 8 — Friendly relative timestamps
+        // ===================================================================
+        function relativeTime(rawTimestamp) {
+            const now = new Date();
+            const then = new Date(rawTimestamp);
+            if (isNaN(then.getTime())) return rawTimestamp;
+
+            const diffMs = now - then;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHr = Math.floor(diffMin / 60);
+
+            if (diffSec < 60) return 'Just now';
+            if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`;
+
+            // Check same day
+            const isToday = now.toDateString() === then.toDateString();
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const isYesterday = yesterday.toDateString() === then.toDateString();
+
+            const timeStr = then.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+            if (isToday) return `Today, ${timeStr}`;
+            if (isYesterday) return `Yesterday, ${timeStr}`;
+
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `${then.getDate()} ${months[then.getMonth()]}, ${timeStr}`;
+        }
+
+        // ===================================================================
+        // Change 5 — Target display formatting
+        // ===================================================================
+        function formatTarget(target) {
+            let cleaned = (target || '').replace(/_/g, ' ');
+            if (cleaned.length > 60) cleaned = cleaned.substring(0, 60) + '…';
+            return cleaned;
+        }
+
+        // ===================================================================
+        // VT badge HTML helper
         // ===================================================================
         function vtBadgeHtml(vtData) {
             if (!vtData) return '<span class="vt-badge gray">VT: N/A</span>';
@@ -129,12 +222,9 @@
             return '<span class="vt-badge gray">VT: N/A</span>';
         }
 
-        // Helper: get the top-level vt_data for an alert
         function getAlertVtData(alertObj) {
             if (!alertObj) return null;
-            // URL alerts: details.vt_data
             if (alertObj.details && alertObj.details.vt_data) return alertObj.details.vt_data;
-            // Email alerts: pick the "worst" vt_data from urls array
             if (alertObj.details && alertObj.details.urls && alertObj.details.urls.length > 0) {
                 for (const u of alertObj.details.urls) {
                     if (u.vt_data && u.vt_data.status === 'success' && u.vt_data.malicious > 0) return u.vt_data;
@@ -145,7 +235,7 @@
         }
 
         // ===================================================================
-        // Render the full alerts list from localStorage
+        // Render alerts list (Changes 5, 6, 7, 8)
         // ===================================================================
         function renderAlertsList() {
             const alerts = loadAlerts();
@@ -161,14 +251,16 @@
 
         function alertCardHtml(a) {
             const vtData = getAlertVtData(a);
+            const displayTarget = formatTarget(a.target);
+            const friendlyTime = relativeTime(a.timestamp);
             return `
-                <div class="alert-item card" onclick="viewAlertLocal('${a.id}')">
+                <div class="alert-item card severity-${a.severity}" onclick="viewAlertLocal('${a.id}')">
                     <span class="alert-type">${a.type}</span>
-                    <span class="alert-target">${escHtml(a.target)}</span>
+                    <span class="alert-target" title="${escAttr(a.target)}">${escHtml(displayTarget)}</span>
                     <span class="severity ${a.severity}">${a.severity}</span>
                     ${vtBadgeHtml(vtData)}
-                    <span class="alert-time">${a.timestamp}</span>
-                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewAlertLocal('${a.id}')">View</button>
+                    <span class="alert-time" title="${escAttr(a.timestamp)}">${friendlyTime}</span>
+                    <button class="btn-view" onclick="event.stopPropagation(); viewAlertLocal('${a.id}')">View Details →</button>
                 </div>`;
         }
 
@@ -178,11 +270,17 @@
             return d.innerHTML;
         }
 
+        function escAttr(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // Refresh relative times every 60 seconds (Change 8)
+        setInterval(renderAlertsList, 60000);
+
         // ===================================================================
-        // Change 6 — Loading spinner
+        // Loading spinner
         // ===================================================================
         function showLoading() {
-            // Remove empty placeholder if present
             if (alertsList.innerText.includes('No alerts')) alertsList.innerHTML = '';
             const el = document.createElement('div');
             el.id = 'scan-loading';
@@ -199,12 +297,12 @@
         }
 
         // ===================================================================
-        // URL Analysis (Change 6: spinner wraps the fetch)
+        // URL Analysis
         // ===================================================================
         urlForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const url = document.getElementById('url-input').value;
-            const submitBtn = e.target.querySelector('button');
+            const submitBtn = urlForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerText = 'Analyzing…';
             showLoading();
@@ -219,6 +317,7 @@
                 const alertObj = await resp.json();
                 pushAlert(alertObj);
                 renderAlertsList();
+                updateStats();
                 viewAlertLocal(alertObj.id);
                 urlForm.reset();
             } catch (err) {
@@ -231,13 +330,25 @@
         });
 
         // ===================================================================
-        // Email Analysis
+        // Change 11 — Try Demo
+        // ===================================================================
+        function tryDemo() {
+            const input = document.getElementById('url-input');
+            input.value = 'http://paypa1-secure-login.xyz/verify';
+            urlForm.requestSubmit();
+        }
+
+        // ===================================================================
+        // Change 3 — Email file selection / clear (fixed drop zone)
         // ===================================================================
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            document.getElementById('file-name').innerText = file.name;
+            // Show file tag below drop zone
+            const tagArea = document.getElementById('file-tag-area');
+            tagArea.innerHTML = `<span class="file-tag">${escHtml(file.name)} <button class="file-tag-clear" onclick="clearFileSelection(event)" title="Remove file">×</button></span>`;
+
             const formData = new FormData();
             formData.append('file', file);
             showLoading();
@@ -250,6 +361,7 @@
                 const alertObj = await resp.json();
                 pushAlert(alertObj);
                 renderAlertsList();
+                updateStats();
                 viewAlertLocal(alertObj.id);
             } catch (err) {
                 window.alert('Analysis failed');
@@ -258,41 +370,125 @@
             }
         });
 
+        function clearFileSelection(e) {
+            e.stopPropagation();
+            fileInput.value = '';
+            document.getElementById('file-tag-area').innerHTML = '';
+        }
+
         // ===================================================================
-        // Change 4 — VT Intelligence section HTML builder
+        // Change 10 — Risk gauge SVG builder
+        // ===================================================================
+        function riskGaugeHtml(score, severity) {
+            const clamped = Math.max(0, Math.min(100, score || 0));
+            // Arc parameters: semicircle from 180° to 0°
+            const radius = 70;
+            const circumference = Math.PI * radius;
+            const offset = circumference - (clamped / 100) * circumference;
+            let color;
+            if (clamped >= 70) color = '#EF4444';
+            else if (clamped >= 30) color = '#F59E0B';
+            else color = '#22C55E';
+
+            return `
+                <div class="risk-gauge-container">
+                    <svg class="risk-gauge-svg" viewBox="0 0 180 100">
+                        <path d="M 10 90 A 70 70 0 0 1 170 90" class="risk-gauge-bg" />
+                        <path d="M 10 90 A 70 70 0 0 1 170 90" class="risk-gauge-fill"
+                              style="stroke:${color}; stroke-dasharray:${circumference}; stroke-dashoffset:${offset};" />
+                    </svg>
+                    <div class="risk-gauge-value" style="color:${color}">${clamped}</div>
+                    <div class="risk-gauge-label">Risk Score</div>
+                    <span class="severity ${severity}" style="margin-top:0.5rem">${severity}</span>
+                </div>`;
+        }
+
+        // ===================================================================
+        // Change 12 — MITRE ATT&CK mapping
+        // ===================================================================
+        function mitreTagHtml(alertObj) {
+            if (alertObj.severity !== 'High') return '';
+
+            let techId, techName;
+            const indicators = (alertObj.details.suspicious_indicators || alertObj.details.reasons || []).join(' ').toLowerCase();
+
+            if (alertObj.type === 'Email') {
+                if (alertObj.details.attachments && alertObj.details.attachments.length > 0) {
+                    techId = 'T1566.001';
+                    techName = 'Spearphishing Attachment';
+                } else {
+                    techId = 'T1566.002';
+                    techName = 'Spearphishing Link';
+                }
+            } else {
+                // URL alert
+                if (indicators.includes('ip') || indicators.includes('ip-based') || indicators.includes('ip address')) {
+                    techId = 'T1583.004';
+                    techName = 'Acquire Infrastructure: Server';
+                } else {
+                    techId = 'T1566.002';
+                    techName = 'Spearphishing Link';
+                }
+            }
+
+            if (!techId) {
+                techId = 'T1566';
+                techName = 'Phishing';
+            }
+
+            const mitreUrl = `https://attack.mitre.org/techniques/${techId.replace(/\./g, '/')}/`;
+
+            return `
+                <div class="mitre-section">
+                    <h4>MITRE ATT&CK</h4>
+                    <a class="mitre-tag" href="${mitreUrl}" target="_blank" rel="noopener noreferrer">
+                        <span class="mitre-tag-id">${techId}</span>
+                        <span class="mitre-tag-name">${techName}</span>
+                        <span class="mitre-tag-link">↗</span>
+                    </a>
+                </div>`;
+        }
+
+        // ===================================================================
+        // Change 9 — VT Intelligence section HTML builder
         // ===================================================================
         function vtSectionHtml(vtData, targetUrl) {
             if (!vtData || vtData.status === 'no_key') {
                 return `
                     <div class="detail-section">
-                        <div class="vt-info-box gray">🔒 VirusTotal: Not configured</div>
+                        <div class="vt-info-box gray">🔒 VirusTotal data not available</div>
                     </div>`;
             }
 
             if (vtData.status === 'success') {
                 const total = vtData.total || 1;
-                const pctM = ((vtData.malicious / total) * 100).toFixed(1);
-                const pctS = ((vtData.suspicious / total) * 100).toFixed(1);
-                const pctH = ((vtData.harmless / total) * 100).toFixed(1);
-                const pctU = ((vtData.undetected / total) * 100).toFixed(1);
+                const mal = vtData.malicious || 0;
+                const sus = vtData.suspicious || 0;
+                const har = vtData.harmless || 0;
+                const und = vtData.undetected || 0;
+
+                const pctM = ((mal / total) * 100).toFixed(1);
+                const pctS = ((sus / total) * 100).toFixed(1);
+                const pctH = ((har / total) * 100).toFixed(1);
+                const pctU = ((und / total) * 100).toFixed(1);
 
                 return `
                     <div class="detail-section">
                         <h4 class="vt-section-header">🛡️ VirusTotal Intelligence</h4>
 
                         <div class="vt-bar-container">
-                            <div class="vt-bar-segment malicious" style="width:${pctM}%"></div>
-                            <div class="vt-bar-segment suspicious" style="width:${pctS}%"></div>
-                            <div class="vt-bar-segment harmless" style="width:${pctH}%"></div>
-                            <div class="vt-bar-segment undetected" style="width:${pctU}%"></div>
+                            <div class="vt-bar-segment malicious ${mal > 0 ? 'has-value' : ''}" style="width:${pctM}%"></div>
+                            <div class="vt-bar-segment suspicious ${sus > 0 ? 'has-value' : ''}" style="width:${pctS}%"></div>
+                            <div class="vt-bar-segment harmless ${har > 0 ? 'has-value' : ''}" style="width:${pctH}%"></div>
+                            <div class="vt-bar-segment undetected ${und > 0 ? 'has-value' : ''}" style="width:${pctU}%"></div>
                         </div>
 
-                        <p class="vt-flagged-summary">${vtData.malicious}/${vtData.total} engines flagged as malicious</p>
+                        <p class="vt-flagged-summary">${mal} / ${total} security vendors flagged this as malicious</p>
 
                         <div class="vt-stat-pills">
-                            <span class="vt-pill malicious">Malicious: ${vtData.malicious}</span>
-                            <span class="vt-pill suspicious">Suspicious: ${vtData.suspicious}</span>
-                            <span class="vt-pill harmless">Harmless: ${vtData.harmless}</span>
+                            <span class="vt-pill malicious">Malicious: ${mal}</span>
+                            <span class="vt-pill suspicious">Suspicious: ${sus}</span>
+                            <span class="vt-pill harmless">Harmless: ${har}</span>
                         </div>
 
                         ${vtData.scan_date ? `<p class="vt-scan-date">Last scanned: ${vtData.scan_date}</p>` : ''}
@@ -311,21 +507,17 @@
                 <div class="detail-section">
                     <h4 class="vt-section-header">🛡️ VirusTotal Intelligence</h4>
                     <div class="vt-info-box amber">
-                        ⚠️ VT Status: ${escHtml(vtData.message || vtData.status)}${extra}
+                        ⚠️ VirusTotal: ${escHtml(vtData.message || vtData.status)}${extra}
                     </div>
                     <p class="vt-attribution">Threat intelligence powered by <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">VirusTotal</a></p>
                 </div>`;
-        }
-
-        function escAttr(str) {
-            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         // Mini VT badge for email URL/attachment lists
         function miniVtBadge(vtData) {
             if (!vtData) return '<small class="vt-badge gray" style="font-size:0.65rem">VT: N/A</small>';
             if (vtData.status === 'success' && vtData.malicious > 0)
-                return `<small class="vt-badge red" style="font-size:0.65rem">VT: ${vtData.malicious}/${vtData.total} flagged</small>`;
+                return `<small class="vt-badge red" style="font-size:0.65rem">VT: ${vtData.malicious} flagged</small>`;
             if (vtData.status === 'success')
                 return '<small class="vt-badge green" style="font-size:0.65rem">VT: Clean</small>';
             if (vtData.status === 'pending')
@@ -336,13 +528,12 @@
         }
 
         // ===================================================================
-        // View alert detail — from localStorage (Change 3)
+        // View alert detail — from localStorage
         // ===================================================================
         function viewAlertLocal(id) {
             const alerts = loadAlerts();
             const alertObj = alerts.find(a => a.id === id);
             if (!alertObj) {
-                // Fallback: try the backend
                 viewAlertRemote(id);
                 return;
             }
@@ -361,35 +552,38 @@
             document.getElementById('modal-title').innerText = alertObj.type + ' Analysis Result';
             document.getElementById('modal-subtitle').innerText = alertObj.target + ' analyzed at ' + alertObj.timestamp;
 
+            // Change 10: Risk gauge replaces plain score display
             let bodyHtml = `
                 <div class="detail-section">
                     <h4>Risk Assessment</h4>
-                    <p style="font-size: 1.25rem;">Severity: <span class="severity ${alertObj.severity}">${alertObj.severity}</span></p>
-                    <p>Risk Score: <strong>${alertObj.score}/100</strong></p>
+                    ${riskGaugeHtml(alertObj.score, alertObj.severity)}
                 </div>
             `;
 
-            if (alertObj.details.suspicious_indicators && alertObj.details.suspicious_indicators.length > 0) {
+            // Suspicious indicators (Change 10: red × prefix via CSS, green fallback)
+            const indicators = alertObj.details.suspicious_indicators || alertObj.details.reasons || [];
+            if (indicators.length > 0) {
                 bodyHtml += `
                     <div class="detail-section">
                         <h4>Suspicious Indicators</h4>
                         <ul class="indicator-list">
-                            ${alertObj.details.suspicious_indicators.map(ind => `<li class="indicator-item">${escHtml(ind)}</li>`).join('')}
+                            ${indicators.map(ind => `<li class="indicator-item">${escHtml(ind)}</li>`).join('')}
                         </ul>
                     </div>
                 `;
-            } else if (alertObj.details.reasons && alertObj.details.reasons.length > 0) {
+            } else {
                 bodyHtml += `
                     <div class="detail-section">
-                        <h4>Threat Indicators</h4>
-                        <ul class="indicator-list">
-                            ${alertObj.details.reasons.map(ind => `<li class="indicator-item">${escHtml(ind)}</li>`).join('')}
-                        </ul>
+                        <h4>Suspicious Indicators</h4>
+                        <div class="indicators-clean">✓ No suspicious patterns detected</div>
                     </div>
                 `;
             }
 
-            // Change 4: VT Intelligence section for URL alerts
+            // Change 12: MITRE ATT&CK section for High severity
+            bodyHtml += mitreTagHtml(alertObj);
+
+            // Change 9: VT Intelligence section for URL alerts
             if (alertObj.details.vt_data) {
                 bodyHtml += vtSectionHtml(alertObj.details.vt_data, alertObj.target);
             }
@@ -403,7 +597,7 @@
                     </div>
                 `;
 
-                // Change 4 (email): Collapsed URL list with mini VT badges
+                // Email URL list with per-URL VT badges
                 if (alertObj.details.urls && alertObj.details.urls.length > 0) {
                     bodyHtml += `
                         <div class="detail-section">
@@ -440,7 +634,7 @@
         }
 
         // ===================================================================
-        // Change 6 — Re-scan button handler
+        // Re-scan button handler
         // ===================================================================
         async function rescanUrl(url) {
             showLoading();
@@ -454,6 +648,7 @@
                 const alertObj = await resp.json();
                 pushAlert(alertObj);
                 renderAlertsList();
+                updateStats();
                 viewAlertLocal(alertObj.id);
             } catch (err) {
                 window.alert('Re-scan failed');
@@ -466,7 +661,6 @@
             modal.style.display = 'none';
         }
 
-        // Close on click outside
         window.onclick = function (event) {
             if (event.target == modal) {
                 closeModal();
@@ -474,9 +668,10 @@
         }
 
         // ===================================================================
-        // On page load: render alerts from localStorage (Change 3)
+        // On page load
         // ===================================================================
         renderAlertsList();
+        updateStats();
     </script>
 </body>
 
