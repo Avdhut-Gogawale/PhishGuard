@@ -307,3 +307,280 @@ input[type="text"]:focus {
         margin-top: 0.5rem;
     }
 }
+
+/* ===== Loading Spinner (Change 6) ===== */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ===== VT Analysis Bar (Change 4) ===== */
+.vt-bar-container {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 0.75rem 0;
+}
+
+.vt-bar-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.vt-bar-segment.malicious  { background: var(--accent-red); }
+.vt-bar-segment.suspicious { background: var(--accent-yellow); }
+.vt-bar-segment.harmless   { background: var(--accent-green); }
+.vt-bar-segment.undetected { background: rgba(148, 163, 184, 0.4); }
+
+/* ===== VT Stat Pills (Change 4) ===== */
+.vt-stat-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.vt-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.vt-pill.malicious {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.vt-pill.suspicious {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-yellow);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.vt-pill.harmless {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* ===== VT Info / Warning Boxes (Change 4) ===== */
+.vt-info-box {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.vt-info-box.amber {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: var(--accent-yellow);
+}
+
+.vt-info-box.gray {
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    color: var(--text-secondary);
+}
+
+/* ===== VT Badge on Alert Cards (Change 5) ===== */
+.vt-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+.vt-badge.red {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.vt-badge.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.vt-badge.amber {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-yellow);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.vt-badge.gray {
+    background: rgba(148, 163, 184, 0.08);
+    color: var(--text-secondary);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+/* ===== Alerts Section Header with Clear Button (Change 3) ===== */
+.alerts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.alerts-header h2 {
+    margin-bottom: 0;
+    font-size: 1.5rem;
+}
+
+.btn-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-clear:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--accent-red);
+}
+
+/* ===== VT Attribution (Change 7) ===== */
+.vt-attribution {
+    margin-top: 0.75rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.vt-attribution a {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.vt-attribution a:hover {
+    color: var(--text-primary);
+}
+
+/* ===== VT External Link ===== */
+.vt-ext-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--primary);
+    text-decoration: none;
+    margin-top: 0.5rem;
+    transition: color 0.2s;
+}
+
+.vt-ext-link:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+/* ===== Collapsible Email URL List (Change 4 — email) ===== */
+.vt-email-url-item {
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.5rem;
+}
+
+.vt-email-url-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* ===== Re-scan Button (Change 6) ===== */
+.btn-rescan {
+    background: transparent;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--accent-yellow);
+    border-radius: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-rescan:hover {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+/* ===== Footer (Change 7) ===== */
+.site-footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.site-footer a {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.site-footer a:hover {
+    color: var(--text-primary);
+}
+
+/* ===== Scan Date & VT header icon ===== */
+.vt-scan-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.35rem;
+}
+
+.vt-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.vt-flagged-summary {
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+    color: var(--text-primary);
+}

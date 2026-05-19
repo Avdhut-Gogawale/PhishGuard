@@ -16,7 +16,7 @@
         <header>
             <div class="logo-area">
                 <h1>PhishGuard</h1>
-                <p>SOC Alert Monitoring & Threat Intel Analysis</p>
+                <p>SOC Alert Monitoring &amp; Threat Intel Analysis</p>
             </div>
             <div class="system-status">
                 <span class="severity Low">System Online</span>
@@ -37,7 +37,7 @@
             <div class="card scanner-card">
                 <h2>📧 Analyze Email (.eml)</h2>
                 <div id="file-upload-form" onclick="document.getElementById('file-input').click()">
-                    <p>Click or Drag & Drop .eml file</p>
+                    <p>Click or Drag &amp; Drop .eml file</p>
                     <input type="file" id="file-input" class="hidden" accept=".eml">
                     <p id="file-name" class="alert-time" style="margin-top: 5px;"></p>
                 </div>
@@ -45,25 +45,20 @@
         </div>
 
         <div class="alerts-section">
-            <h2>Recent Security Alerts</h2>
+            <!-- Change 3: alerts header with Clear History button -->
+            <div class="alerts-header">
+                <h2>Recent Security Alerts</h2>
+                <button id="btn-clear-history" class="btn-clear" onclick="clearHistory()">Clear History</button>
+            </div>
             <div id="alerts-list">
-                {% if not alerts %}
-                <div class="card" style="text-align: center; color: var(--text-secondary);">
-                    No alerts detected yet. Start by scanning a URL or uploading an email.
-                </div>
-                {% endif %}
-                {% for alert in alerts %}
-                <div class="alert-item card" onclick="viewAlert('{{ alert.id }}')">
-                    <span class="alert-type">{{ alert.type }}</span>
-                    <span class="alert-target">{{ alert.target }}</span>
-                    <span class="severity {{ alert.severity }}">{{ alert.severity }}</span>
-                    <span class="alert-time">{{ alert.timestamp }}</span>
-                    <button class="btn btn-secondary btn-sm"
-                        onclick="event.stopPropagation(); viewAlert('{{ alert.id }}')">View</button>
-                </div>
-                {% endfor %}
+                <!-- Populated by JS from localStorage on page load -->
             </div>
         </div>
+
+        <!-- Change 7: Footer attribution -->
+        <footer class="site-footer">
+            Threat intelligence powered by <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">VirusTotal</a>
+        </footer>
     </div>
 
     <!-- Modal for Detail View -->
@@ -89,13 +84,130 @@
         const alertsList = document.getElementById('alerts-list');
         const modal = document.getElementById('modal');
 
-        // URL Analysis
+        const STORAGE_KEY = 'phishguard_alerts';
+        const MAX_ALERTS = 20;
+
+        // ===================================================================
+        // Change 3 — localStorage helpers
+        // ===================================================================
+        function loadAlerts() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch { return []; }
+        }
+
+        function saveAlerts(alerts) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts.slice(0, MAX_ALERTS)));
+        }
+
+        function pushAlert(alertObj) {
+            const alerts = loadAlerts();
+            alerts.unshift(alertObj);
+            saveAlerts(alerts);
+        }
+
+        function clearHistory() {
+            localStorage.removeItem(STORAGE_KEY);
+            renderAlertsList();
+        }
+
+        // ===================================================================
+        // Change 5 — VT badge HTML helper
+        // ===================================================================
+        function vtBadgeHtml(vtData) {
+            if (!vtData) return '<span class="vt-badge gray">VT: N/A</span>';
+            const s = vtData.status;
+            if (s === 'success' && vtData.malicious > 0) {
+                return `<span class="vt-badge red">VT: ${vtData.malicious}/${vtData.total} flagged</span>`;
+            }
+            if (s === 'success' && vtData.malicious === 0) {
+                return '<span class="vt-badge green">VT: Clean</span>';
+            }
+            if (s === 'pending') return '<span class="vt-badge gray">VT: Scanning…</span>';
+            if (s === 'rate_limited') return '<span class="vt-badge amber">VT: Rate limited</span>';
+            return '<span class="vt-badge gray">VT: N/A</span>';
+        }
+
+        // Helper: get the top-level vt_data for an alert
+        function getAlertVtData(alertObj) {
+            if (!alertObj) return null;
+            // URL alerts: details.vt_data
+            if (alertObj.details && alertObj.details.vt_data) return alertObj.details.vt_data;
+            // Email alerts: pick the "worst" vt_data from urls array
+            if (alertObj.details && alertObj.details.urls && alertObj.details.urls.length > 0) {
+                for (const u of alertObj.details.urls) {
+                    if (u.vt_data && u.vt_data.status === 'success' && u.vt_data.malicious > 0) return u.vt_data;
+                }
+                return alertObj.details.urls[0].vt_data || null;
+            }
+            return null;
+        }
+
+        // ===================================================================
+        // Render the full alerts list from localStorage
+        // ===================================================================
+        function renderAlertsList() {
+            const alerts = loadAlerts();
+            if (alerts.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="card" style="text-align: center; color: var(--text-secondary);">
+                        No alerts detected yet. Start by scanning a URL or uploading an email.
+                    </div>`;
+                return;
+            }
+            alertsList.innerHTML = alerts.map(a => alertCardHtml(a)).join('');
+        }
+
+        function alertCardHtml(a) {
+            const vtData = getAlertVtData(a);
+            return `
+                <div class="alert-item card" onclick="viewAlertLocal('${a.id}')">
+                    <span class="alert-type">${a.type}</span>
+                    <span class="alert-target">${escHtml(a.target)}</span>
+                    <span class="severity ${a.severity}">${a.severity}</span>
+                    ${vtBadgeHtml(vtData)}
+                    <span class="alert-time">${a.timestamp}</span>
+                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewAlertLocal('${a.id}')">View</button>
+                </div>`;
+        }
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ===================================================================
+        // Change 6 — Loading spinner
+        // ===================================================================
+        function showLoading() {
+            // Remove empty placeholder if present
+            if (alertsList.innerText.includes('No alerts')) alertsList.innerHTML = '';
+            const el = document.createElement('div');
+            el.id = 'scan-loading';
+            el.className = 'loading-indicator';
+            el.innerHTML = `
+                <div class="spinner"></div>
+                <span>Querying VirusTotal threat intelligence…</span>`;
+            alertsList.insertAdjacentElement('afterbegin', el);
+        }
+
+        function hideLoading() {
+            const el = document.getElementById('scan-loading');
+            if (el) el.remove();
+        }
+
+        // ===================================================================
+        // URL Analysis (Change 6: spinner wraps the fetch)
+        // ===================================================================
         urlForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const url = document.getElementById('url-input').value;
             const submitBtn = e.target.querySelector('button');
             submitBtn.disabled = true;
-            submitBtn.innerText = 'Analyzing...';
+            submitBtn.innerText = 'Analyzing…';
+            showLoading();
 
             try {
                 const formData = new FormData();
@@ -104,19 +216,23 @@
                     method: 'POST',
                     body: formData
                 });
-                const alert = await resp.json();
-                addAlertToList(alert);
-                viewAlert(alert.id);
+                const alertObj = await resp.json();
+                pushAlert(alertObj);
+                renderAlertsList();
+                viewAlertLocal(alertObj.id);
                 urlForm.reset();
             } catch (err) {
-                alert('Analysis failed');
+                window.alert('Analysis failed');
             } finally {
+                hideLoading();
                 submitBtn.disabled = false;
                 submitBtn.innerText = 'Scan URL';
             }
         });
 
+        // ===================================================================
         // Email Analysis
+        // ===================================================================
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -124,119 +240,194 @@
             document.getElementById('file-name').innerText = file.name;
             const formData = new FormData();
             formData.append('file', file);
+            showLoading();
 
             try {
                 const resp = await fetch('/upload-eml', {
                     method: 'POST',
                     body: formData
                 });
-                const alert = await resp.json();
-                addAlertToList(alert);
-                viewAlert(alert.id);
+                const alertObj = await resp.json();
+                pushAlert(alertObj);
+                renderAlertsList();
+                viewAlertLocal(alertObj.id);
             } catch (err) {
-                alert('Analysis failed');
+                window.alert('Analysis failed');
+            } finally {
+                hideLoading();
             }
         });
 
-        function addAlertToList(alert) {
-            const html = `
-                <div class="alert-item card" onclick="viewAlert('${alert.id}')">
-                    <span class="alert-type">${alert.type}</span>
-                    <span class="alert-target">${alert.target}</span>
-                    <span class="severity ${alert.severity}">${alert.severity}</span>
-                    <span class="alert-time">${alert.timestamp}</span>
-                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewAlert('${alert.id}')">View</button>
-                </div>
-            `;
-            // Remove empty placeholder
-            if (alertsList.innerText.includes('No alerts')) alertsList.innerHTML = '';
-            alertsList.insertAdjacentHTML('afterbegin', html);
+        // ===================================================================
+        // Change 4 — VT Intelligence section HTML builder
+        // ===================================================================
+        function vtSectionHtml(vtData, targetUrl) {
+            if (!vtData || vtData.status === 'no_key') {
+                return `
+                    <div class="detail-section">
+                        <div class="vt-info-box gray">🔒 VirusTotal: Not configured</div>
+                    </div>`;
+            }
+
+            if (vtData.status === 'success') {
+                const total = vtData.total || 1;
+                const pctM = ((vtData.malicious / total) * 100).toFixed(1);
+                const pctS = ((vtData.suspicious / total) * 100).toFixed(1);
+                const pctH = ((vtData.harmless / total) * 100).toFixed(1);
+                const pctU = ((vtData.undetected / total) * 100).toFixed(1);
+
+                return `
+                    <div class="detail-section">
+                        <h4 class="vt-section-header">🛡️ VirusTotal Intelligence</h4>
+
+                        <div class="vt-bar-container">
+                            <div class="vt-bar-segment malicious" style="width:${pctM}%"></div>
+                            <div class="vt-bar-segment suspicious" style="width:${pctS}%"></div>
+                            <div class="vt-bar-segment harmless" style="width:${pctH}%"></div>
+                            <div class="vt-bar-segment undetected" style="width:${pctU}%"></div>
+                        </div>
+
+                        <p class="vt-flagged-summary">${vtData.malicious}/${vtData.total} engines flagged as malicious</p>
+
+                        <div class="vt-stat-pills">
+                            <span class="vt-pill malicious">Malicious: ${vtData.malicious}</span>
+                            <span class="vt-pill suspicious">Suspicious: ${vtData.suspicious}</span>
+                            <span class="vt-pill harmless">Harmless: ${vtData.harmless}</span>
+                        </div>
+
+                        ${vtData.scan_date ? `<p class="vt-scan-date">Last scanned: ${vtData.scan_date}</p>` : ''}
+                        ${vtData.permalink ? `<a class="vt-ext-link" href="${vtData.permalink}" target="_blank" rel="noopener noreferrer">View full report on VirusTotal ↗</a>` : ''}
+
+                        <p class="vt-attribution">Threat intelligence powered by <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">VirusTotal</a></p>
+                    </div>`;
+            }
+
+            // pending / rate_limited / timeout / error
+            let extra = '';
+            if (vtData.status === 'pending' && targetUrl) {
+                extra = `<button class="btn-rescan" onclick="rescanUrl('${escAttr(targetUrl)}')">Re-scan</button>`;
+            }
+            return `
+                <div class="detail-section">
+                    <h4 class="vt-section-header">🛡️ VirusTotal Intelligence</h4>
+                    <div class="vt-info-box amber">
+                        ⚠️ VT Status: ${escHtml(vtData.message || vtData.status)}${extra}
+                    </div>
+                    <p class="vt-attribution">Threat intelligence powered by <a href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">VirusTotal</a></p>
+                </div>`;
         }
 
-        async function viewAlert(id) {
-            const resp = await fetch(`/alert/${id}`);
-            const alert = await resp.json();
+        function escAttr(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
 
-            document.getElementById('modal-title').innerText = alert.type + ' Analysis Result';
-            document.getElementById('modal-subtitle').innerText = alert.target + ' analyzed at ' + alert.timestamp;
+        // Mini VT badge for email URL/attachment lists
+        function miniVtBadge(vtData) {
+            if (!vtData) return '<small class="vt-badge gray" style="font-size:0.65rem">VT: N/A</small>';
+            if (vtData.status === 'success' && vtData.malicious > 0)
+                return `<small class="vt-badge red" style="font-size:0.65rem">VT: ${vtData.malicious}/${vtData.total} flagged</small>`;
+            if (vtData.status === 'success')
+                return '<small class="vt-badge green" style="font-size:0.65rem">VT: Clean</small>';
+            if (vtData.status === 'pending')
+                return '<small class="vt-badge gray" style="font-size:0.65rem">VT: Scanning…</small>';
+            if (vtData.status === 'rate_limited')
+                return '<small class="vt-badge amber" style="font-size:0.65rem">VT: Rate limited</small>';
+            return '<small class="vt-badge gray" style="font-size:0.65rem">VT: N/A</small>';
+        }
+
+        // ===================================================================
+        // View alert detail — from localStorage (Change 3)
+        // ===================================================================
+        function viewAlertLocal(id) {
+            const alerts = loadAlerts();
+            const alertObj = alerts.find(a => a.id === id);
+            if (!alertObj) {
+                // Fallback: try the backend
+                viewAlertRemote(id);
+                return;
+            }
+            renderAlertModal(alertObj);
+        }
+
+        async function viewAlertRemote(id) {
+            try {
+                const resp = await fetch(`/alert/${id}`);
+                const alertObj = await resp.json();
+                renderAlertModal(alertObj);
+            } catch { /* ignore */ }
+        }
+
+        function renderAlertModal(alertObj) {
+            document.getElementById('modal-title').innerText = alertObj.type + ' Analysis Result';
+            document.getElementById('modal-subtitle').innerText = alertObj.target + ' analyzed at ' + alertObj.timestamp;
 
             let bodyHtml = `
                 <div class="detail-section">
                     <h4>Risk Assessment</h4>
-                    <p style="font-size: 1.25rem;">Severity: <span class="severity ${alert.severity}">${alert.severity}</span></p>
-                    <p>Risk Score: <strong>${alert.score}/100</strong></p>
+                    <p style="font-size: 1.25rem;">Severity: <span class="severity ${alertObj.severity}">${alertObj.severity}</span></p>
+                    <p>Risk Score: <strong>${alertObj.score}/100</strong></p>
                 </div>
             `;
 
-            if (alert.details.suspicious_indicators && alert.details.suspicious_indicators.length > 0) {
+            if (alertObj.details.suspicious_indicators && alertObj.details.suspicious_indicators.length > 0) {
                 bodyHtml += `
                     <div class="detail-section">
                         <h4>Suspicious Indicators</h4>
                         <ul class="indicator-list">
-                            ${alert.details.suspicious_indicators.map(ind => `<li class="indicator-item">${ind}</li>`).join('')}
+                            ${alertObj.details.suspicious_indicators.map(ind => `<li class="indicator-item">${escHtml(ind)}</li>`).join('')}
                         </ul>
                     </div>
                 `;
-            } else if (alert.details.reasons && alert.details.reasons.length > 0) {
+            } else if (alertObj.details.reasons && alertObj.details.reasons.length > 0) {
                 bodyHtml += `
                     <div class="detail-section">
                         <h4>Threat Indicators</h4>
                         <ul class="indicator-list">
-                            ${alert.details.reasons.map(ind => `<li class="indicator-item">${ind}</li>`).join('')}
+                            ${alertObj.details.reasons.map(ind => `<li class="indicator-item">${escHtml(ind)}</li>`).join('')}
                         </ul>
                     </div>
                 `;
             }
 
-            if (alert.details.vt_data && alert.details.vt_data.status === 'success') {
-                bodyHtml += `
-                    <div class="detail-section">
-                        <h4>VirusTotal Intel</h4>
-                        <p>Malicious: <span style="color:var(--accent-red)">${alert.details.vt_data.malicious}</span></p>
-                        <p>Suspicious: <span style="color:var(--accent-yellow)">${alert.details.vt_data.suspicious}</span></p>
-                        <p>Harmless: <span style="color:var(--accent-green)">${alert.details.vt_data.harmless}</span></p>
-                    </div>
-                `;
+            // Change 4: VT Intelligence section for URL alerts
+            if (alertObj.details.vt_data) {
+                bodyHtml += vtSectionHtml(alertObj.details.vt_data, alertObj.target);
             }
 
-            if (alert.type === 'Email') {
+            if (alertObj.type === 'Email') {
                 bodyHtml += `
                     <div class="detail-section">
                         <h4>Email Headers</h4>
-                        <p><strong>From:</strong> ${alert.details.from}</p>
-                        <p><strong>Subject:</strong> ${alert.details.subject}</p>
+                        <p><strong>From:</strong> ${escHtml(alertObj.details.from || '')}</p>
+                        <p><strong>Subject:</strong> ${escHtml(alertObj.details.subject || '')}</p>
                     </div>
                 `;
 
-                if (alert.details.urls && alert.details.urls.length > 0) {
+                // Change 4 (email): Collapsed URL list with mini VT badges
+                if (alertObj.details.urls && alertObj.details.urls.length > 0) {
                     bodyHtml += `
                         <div class="detail-section">
                             <h4>Analyzed Links in Email</h4>
-                            ${alert.details.urls.map(u => `
-                                <div style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
-                                    <strong>${u.url}</strong><br>
-                                    <small>${u.analysis.reasons.join(', ') || 'Clean'}</small>
-                                    ${u.vt_data && u.vt_data.status === 'success' ?
-                            `<br><small style="color:var(--accent-red)">VT: ${u.vt_data.malicious} detections</small>` : ''}
+                            ${alertObj.details.urls.map(u => `
+                                <div class="vt-email-url-item">
+                                    <strong>${escHtml(u.url)}</strong> ${miniVtBadge(u.vt_data)}<br>
+                                    <small>${(u.analysis && u.analysis.reasons) ? u.analysis.reasons.join(', ') || 'Clean' : 'Clean'}</small>
+                                    ${u.vt_data ? vtSectionHtml(u.vt_data, u.url) : ''}
                                 </div>
                             `).join('')}
                         </div>
                     `;
                 }
 
-                if (alert.details.attachments && alert.details.attachments.length > 0) {
+                if (alertObj.details.attachments && alertObj.details.attachments.length > 0) {
                     bodyHtml += `
                         <div class="detail-section">
                             <h4>Analyzed Attachments</h4>
-                            ${alert.details.attachments.map(a => `
-                                <div style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
-                                    <strong>📎 ${a.filename}</strong> (${(a.size / 1024).toFixed(1)} KB)<br>
-                                    <small>Type: ${a.type}</small><br>
-                                    ${a.vt_data && a.vt_data.status === 'success' ?
-                            `<small style="color:${a.vt_data.malicious > 0 ? 'var(--accent-red)' : 'var(--accent-green)'}">
-                                            VirusTotal: ${a.vt_data.malicious} malicious detections
-                                        </small>` :
-                            `<small>${a.vt_data ? a.vt_data.message : 'VT check pending'}</small>`}
+                            ${alertObj.details.attachments.map(a => `
+                                <div class="vt-email-url-item">
+                                    <strong>📎 ${escHtml(a.filename)}</strong> (${(a.size / 1024).toFixed(1)} KB) ${miniVtBadge(a.vt_data)}<br>
+                                    <small>Type: ${escHtml(a.type || '')}</small>
+                                    ${a.vt_data ? vtSectionHtml(a.vt_data, null) : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -246,6 +437,29 @@
 
             document.getElementById('modal-body').innerHTML = bodyHtml;
             modal.style.display = 'flex';
+        }
+
+        // ===================================================================
+        // Change 6 — Re-scan button handler
+        // ===================================================================
+        async function rescanUrl(url) {
+            showLoading();
+            try {
+                const formData = new FormData();
+                formData.append('url', url);
+                const resp = await fetch('/analyze-url', {
+                    method: 'POST',
+                    body: formData
+                });
+                const alertObj = await resp.json();
+                pushAlert(alertObj);
+                renderAlertsList();
+                viewAlertLocal(alertObj.id);
+            } catch (err) {
+                window.alert('Re-scan failed');
+            } finally {
+                hideLoading();
+            }
         }
 
         function closeModal() {
@@ -258,6 +472,11 @@
                 closeModal();
             }
         }
+
+        // ===================================================================
+        // On page load: render alerts from localStorage (Change 3)
+        // ===================================================================
+        renderAlertsList();
     </script>
 </body>
 
