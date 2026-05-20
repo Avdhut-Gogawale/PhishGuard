@@ -3,7 +3,7 @@
     --primary: #00875a;
     --primary-hover: #006644;
     --primary-glow: rgba(0, 135, 90, 0.12);
-    --background: #f4f6f5;
+    --background: #f2ebd9;
     --surface: #ffffff;
     --card-bg: #ffffff;
     --card-border: #e0e7e3;
@@ -14,7 +14,7 @@
     --accent-yellow: #f59e0b;
     --accent-green: #22c55e;
     --border: #e0e7e3;
-    --input-bg: #f4f6f5;
+    --input-bg: #f2ebd9;
 }
 
 * {
