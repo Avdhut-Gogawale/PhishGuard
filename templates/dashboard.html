@@ -12,9 +12,8 @@
 </head>
 
 <body>
-    <!-- Change 6: Top Nav Bar with blinking cursor -->
     <nav class="top-nav">
-        <span class="top-nav-brand">PhishGuard<span class="terminal-cursor"></span></span>
+        <span class="top-nav-brand">PhishGuard</span>
         <div class="top-nav-links">
             <a href="https://github.com/Avdhut-Gogawale/PhishGuard" target="_blank" rel="noopener noreferrer" title="GitHub">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
@@ -29,8 +28,7 @@
         <header>
             <div class="logo-area">
                 <h1>PhishGuard</h1>
-                <!-- Change 8: Typing animation target -->
-                <p id="subtitle-text"></p>
+                <p>SOC Alert Monitoring &amp; Threat Intel Analysis</p>
             </div>
             <div class="system-status">
                 <span class="severity Low">System Online</span>
@@ -83,7 +81,6 @@
             </div>
             <div class="footer-center">
                 <div class="footer-copy">© 2026 PhishGuard. Built by Avdhut Gogawale.</div>
-                <div class="footer-disclaimer">For educational and portfolio purposes only.</div>
             </div>
             <div class="footer-right">
                 <div class="footer-icons">
@@ -125,27 +122,7 @@
         const STORAGE_KEY = 'phishguard_alerts';
         const MAX_ALERTS = 20;
 
-        // ===================================================================
-        // Change 8 — Typing animation for subtitle
-        // ===================================================================
-        (function typeSubtitle() {
-            const text = 'SOC Alert Monitoring & Threat Intel Analysis';
-            const el = document.getElementById('subtitle-text');
-            let i = 0;
-            // Add blinking cursor span
-            el.innerHTML = '<span class="typing-cursor"></span>';
-            const interval = setInterval(() => {
-                if (i < text.length) {
-                    // Insert character before cursor
-                    const cursor = el.querySelector('.typing-cursor');
-                    cursor.insertAdjacentText('beforebegin', text[i]);
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    // Cursor keeps blinking via CSS animation
-                }
-            }, 40);
-        })();
+
 
         // ===================================================================
         // localStorage helpers
