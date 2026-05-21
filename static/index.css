@@ -40,19 +40,16 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 40px);
+    padding: 0 2rem 2rem;
 }
 
 /* ===== Top Nav Bar ===== */
 .top-nav {
     height: 40px;
-    background: #ffffff;
-    border-bottom: 1px solid #d6cfc3;
+    background: var(--background);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -60,7 +57,6 @@ body {
     position: sticky;
     top: 0;
     z-index: 50;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .top-nav-brand {
@@ -101,6 +97,12 @@ header {
     align-items: center;
 }
 
+.system-status .severity {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1.25rem;
+}
+
 .logo-area h1 {
     font-size: 2.5rem;
     font-weight: 800;
@@ -127,7 +129,7 @@ header {
 .scanner-section {
     display: flex;
     gap: 2rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     align-items: stretch;
 }
 
@@ -148,11 +150,11 @@ header {
 }
 
 .scanner-card.url-card h2 {
-    color: #00875a;
+    color: #2d2a25;
 }
 
 .scanner-card.email-card h2 {
-    color: #c47a2a;
+    color: #2d2a25;
 }
 
 .scanner-card h2 {
@@ -741,14 +743,14 @@ input[type="text"]:focus {
 
 /* ===== Footer ===== */
 .site-footer {
-    background: #ffffff;
-    border-top: 1px solid #d6cfc3;
-    padding: 2.5rem 3rem;
+    background: transparent;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding: 2rem 0;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 2rem;
-    margin-top: auto;
+    margin-top: 2rem;
 }
 
 .footer-left {
@@ -1000,7 +1002,7 @@ input[type="text"]:focus {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        padding: 2rem 1.5rem;
+        padding: 2rem 0;
     }
 
     .footer-right {
